@@ -1,6 +1,6 @@
 {
     "name": "zerp/lead",
-    "description": "Description for lead package",
+    "description": "CRM and lead management module for the Zerp ERP platform",
     "type": "library",
     "license": "MIT",
     "require": {},
