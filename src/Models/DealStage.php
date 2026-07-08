@@ -13,6 +13,7 @@ class DealStage extends Model
     protected $fillable = [
         'name',
         'order',
+        'probability',
         'pipeline_id',
         'creator_id',
         'created_by',
@@ -21,7 +22,7 @@ class DealStage extends Model
     protected function casts(): array
     {
         return [
-            
+            'probability' => 'integer',
         ];
     }
 

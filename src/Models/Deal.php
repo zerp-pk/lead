@@ -16,6 +16,7 @@ class Deal extends Model
     protected $fillable = [
         'name',
         'price',
+        'expected_close_date',
         'pipeline_id',
         'stage_id',
         'sources',
@@ -24,6 +25,7 @@ class Deal extends Model
         'labels',
         'phone',
         'status',
+        'lost_reason_id',
         'is_active',
         'order',
         'creator_id',
@@ -34,6 +36,7 @@ class Deal extends Model
     {
         return [
             'price' => 'decimal:2',
+            'expected_close_date' => 'date',
             'pipeline_id' => 'integer',
             'stage_id' => 'integer',
             'sources' => 'array',
@@ -53,6 +56,11 @@ class Deal extends Model
     public function stage()
     {
         return $this->belongsTo(DealStage::class);
+    }
+
+    public function lostReason()
+    {
+        return $this->belongsTo(LostReason::class);
     }
 
     public function creator()

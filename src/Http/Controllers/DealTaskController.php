@@ -70,6 +70,7 @@ class DealTaskController extends Controller
                 $dealTask             = new DealTask();
                 $dealTask->deal_id    = $validated['deal_id'];
                 $dealTask->name       = $validated['name'];
+                $dealTask->type       = $validated['type'] ?? 'todo';
                 $dealTask->date       = $validated['date'];
                 $dealTask->time       = $validated['time'];
                 $dealTask->priority   = $validated['priority'];
@@ -116,6 +117,7 @@ class DealTaskController extends Controller
             $validated = $request->validated();
 
             $task->name     = $validated['name'];
+            $task->type     = $validated['type'] ?? $task->type;
             $task->date     = $validated['date'];
             $task->time     = $validated['time'];
             $task->priority = $validated['priority'];

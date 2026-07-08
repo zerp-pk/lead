@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from '@/lib/utils';
-import {     GitBranch , Layers , Target , Tag , Globe } from "lucide-react";
+import {     GitBranch , Layers , Target , Tag , Globe , XCircle , Gauge } from "lucide-react";
 
 interface SidebarItem {
     key: string;
@@ -58,6 +58,20 @@ export default function SystemSetupSidebar({ activeItem, onSectionChange }: Syst
             icon: Globe,
             route: 'lead.sources.index',
             permission: 'manage-sources'
+        },
+        {
+            key: 'lost-reasons',
+            label: t('Lost Reasons'),
+            icon: XCircle,
+            route: 'lead.lost-reasons.index',
+            permission: 'manage-deals'
+        },
+        {
+            key: 'lead-scoring',
+            label: t('Lead Scoring'),
+            icon: Gauge,
+            route: 'lead.score-rules.index',
+            permission: 'manage-leads'
         },
     ];
 

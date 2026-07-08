@@ -12,9 +12,14 @@ use Zerp\Lead\Http\Controllers\PipelineController;
 use Illuminate\Support\Facades\Route;
 use Zerp\Lead\Http\Controllers\DashboardController;
 use Zerp\Lead\Http\Controllers\ReportController;
+use Zerp\Lead\Http\Controllers\ActivityController;
+use Zerp\Lead\Http\Controllers\LostReasonController;
+use Zerp\Lead\Http\Controllers\LeadScoreRuleController;
 
 Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Lead'])->group(function () {
     Route::get('/dashboard/crm', [DashboardController::class, 'index'])->name('lead.index');
+
+    Route::get('crm/activities', [ActivityController::class, 'index'])->name('lead.activities.index');
 
     Route::resource('crm/pipelines', PipelineController::class)->names('lead.pipelines');
 
@@ -39,6 +44,20 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Lead'])->group(fu
         Route::post('/', [LabelController::class, 'store'])->name('store');
         Route::put('/{label}', [LabelController::class, 'update'])->name('update');
         Route::delete('/{label}', [LabelController::class, 'destroy'])->name('destroy');       
+    });
+
+    Route::prefix('crm/lost-reasons')->name('lead.lost-reasons.')->group(function () {
+        Route::get('/', [LostReasonController::class, 'index'])->name('index');
+        Route::post('/', [LostReasonController::class, 'store'])->name('store');
+        Route::put('/{lostReason}', [LostReasonController::class, 'update'])->name('update');
+        Route::delete('/{lostReason}', [LostReasonController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('crm/score-rules')->name('lead.score-rules.')->group(function () {
+        Route::get('/', [LeadScoreRuleController::class, 'index'])->name('index');
+        Route::post('/', [LeadScoreRuleController::class, 'store'])->name('store');
+        Route::put('/{scoreRule}', [LeadScoreRuleController::class, 'update'])->name('update');
+        Route::delete('/{scoreRule}', [LeadScoreRuleController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('crm/sources')->name('lead.sources.')->group(function () {
@@ -77,6 +96,8 @@ Route::middleware(['web', 'auth', 'verified', 'PlanModuleCheck:Lead'])->group(fu
     Route::resource('crm/deals', DealController::class)->names('lead.deals');
     Route::post('crm/deals/order', [DealController::class, 'order'])->name('lead.deals.order');
     Route::post('crm/deals/{deal}/change-status', [DealController::class, 'changeStatus'])->name('lead.deals.change-status');
+    Route::post('crm/deals/{deal}/won', [DealController::class, 'markWon'])->name('lead.deals.won');
+    Route::post('crm/deals/{deal}/lost', [DealController::class, 'markLost'])->name('lead.deals.lost');
     Route::patch('crm/deals/{deal}/labels', [DealController::class, 'updateLabels'])->name('lead.deals.update-labels');
     Route::post('crm/deals/{deal}/assign-users', [DealController::class, 'assignUsers'])->name('lead.deals.assign-users');
     Route::delete('crm/deals/{deal}/users/{user}', [DealController::class, 'removeUser'])->name('lead.deals.remove-user');

@@ -19,7 +19,7 @@ class DealStageController extends Controller
     public function index()
     {
         if(Auth::user()->can('manage-deal-stages')){
-            $dealstages = DealStage::select('id', 'name', 'order', 'pipeline_id', 'created_at')
+            $dealstages = DealStage::select('id', 'name', 'order', 'probability', 'pipeline_id', 'created_at')
                 ->where(function($q) {
                     if(Auth::user()->can('manage-any-deal-stages')) {
                         $q->where('created_by', creatorId());
@@ -54,6 +54,7 @@ class DealStageController extends Controller
             $dealstage              = new DealStage();
             $dealstage->name        = $validated['name'];
             $dealstage->pipeline_id = $validated['pipeline_id'];
+            $dealstage->probability = $validated['probability'] ?? 10;
             $dealstage->order       = $maxOrder + 1;
             $dealstage->creator_id  = Auth::id();
             $dealstage->created_by  = creatorId();
@@ -95,6 +96,7 @@ class DealStageController extends Controller
 
             $dealstage->name = $validated['name'];
             $dealstage->pipeline_id = $newPipelineId;
+            $dealstage->probability = $validated['probability'] ?? $dealstage->probability;
             $dealstage->save();
 
             UpdateDealStage::dispatch($request, $dealstage);

@@ -16,6 +16,7 @@ class UpdateDealRequest extends FormRequest
         return [
             'name'          => 'required|string|max:255',
             'price'         => 'numeric|min:0',
+            'expected_close_date' => 'nullable|date',
             'pipeline_id'   => 'required|integer|exists:pipelines,id',
             'stage_id'      => 'required|integer|exists:deal_stages,id',
             'phone'         => 'nullable|string|regex:/^\+\d{1,3}\d{9,13}$/',

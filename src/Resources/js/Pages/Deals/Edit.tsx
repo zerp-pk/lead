@@ -20,6 +20,7 @@ interface EditDealProps {
 interface EditDealFormData {
     name: string;
     price: string;
+    expected_close_date: string;
     pipeline_id: string;
     stage_id: string;
     sources: string[];
@@ -36,6 +37,7 @@ export default function EditDeal({ deal, onSuccess }: EditDealProps) {
     const { data, setData, put, processing, errors } = useForm<EditDealFormData>({
         name: deal.name ?? '',
         price: deal.price?.toString() ?? '0',
+        expected_close_date: deal.expected_close_date ? deal.expected_close_date.substring(0, 10) : '',
         pipeline_id: deal.pipeline_id?.toString() ?? '',
         stage_id: deal.stage_id?.toString() ?? '',
         sources: deal.sources ? (Array.isArray(deal.sources) ? deal.sources.map(String) : []) : [],
@@ -105,6 +107,17 @@ export default function EditDeal({ deal, onSuccess }: EditDealProps) {
                             required
                         />
                         <InputError message={errors.price} />
+                    </div>
+
+                    <div>
+                        <Label htmlFor="expected_close_date">{t('Expected Closing')}</Label>
+                        <Input
+                            id="expected_close_date"
+                            type="date"
+                            value={data.expected_close_date}
+                            onChange={(e) => setData('expected_close_date', e.target.value)}
+                        />
+                        <InputError message={errors.expected_close_date} />
                     </div>
                 </div>
 

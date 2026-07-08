@@ -15,6 +15,7 @@ class UpdateLeadTaskRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'type' => 'nullable|in:todo,call,email,meeting',
             'date' => 'required|date',
             'time' => 'required',
             'priority' => 'required|in:Low,Medium,High',

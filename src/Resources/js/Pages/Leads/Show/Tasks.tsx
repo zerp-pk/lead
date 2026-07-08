@@ -33,6 +33,7 @@ export default function Tasks({ lead, onRegisterAddHandler }: TasksProps) {
     const [editingTask, setEditingTask] = useState<any>(null);
     const [taskForm, setTaskForm] = useState({
         name: '',
+        type: 'todo',
         date: '',
         time: '',
         priority: 'Low',
@@ -90,6 +91,7 @@ export default function Tasks({ lead, onRegisterAddHandler }: TasksProps) {
             }
             setTaskForm({
                 name: editingTask.name || '',
+                type: editingTask.type || 'todo',
                 date: formattedDate,
                 time: editingTask.time || '',
                 priority: editingTask.priority || 'Low',
@@ -245,6 +247,20 @@ export default function Tasks({ lead, onRegisterAddHandler }: TasksProps) {
                                 placeholder={t('Enter task name')}
                                 required
                             />
+                        </div>
+                        <div>
+                            <Label htmlFor="type">{t('Activity Type')}</Label>
+                            <Select value={taskForm.type} onValueChange={(value) => setTaskForm({...taskForm, type: value})}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={t('Select type')} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todo">{t('To-Do')}</SelectItem>
+                                    <SelectItem value="call">{t('Call')}</SelectItem>
+                                    <SelectItem value="email">{t('Email')}</SelectItem>
+                                    <SelectItem value="meeting">{t('Meeting')}</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>

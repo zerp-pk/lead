@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, Users as UsersIcon, Download, FileImage, Tag, MoreVertical, Calendar, Kanban, List, ShoppingCart, Globe, CheckSquare } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, Users as UsersIcon, Download, FileImage, Tag, MoreVertical, Calendar, Kanban, List, ShoppingCart, Globe, CheckSquare, DollarSign as DollarSignIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -27,6 +27,9 @@ import LabelView from './LabelView';
 import NoRecordsFound from '@/components/no-records-found';
 import { Lead, LeadsIndexProps, LeadFilters, LeadModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { stageForecast, stageRevenue } from '../../utils/forecast.mjs';
+import { nextActivity, ACTIVITY_TYPES } from '../../utils/activities.mjs';
+import { band } from '../../utils/scoring.mjs';
 import { usePageButtons } from '@/hooks/usePageButtons';
 
 
@@ -142,7 +145,9 @@ export default function Index() {
         const columns = filteredStages.map((stage, index) => ({
             id: stage.id.toString(),
             title: stage.name,
-            color: colors[index % colors.length]
+            color: colors[index % colors.length],
+            probability: stage.probability ?? 0,
+            subtitle: ''
         }));
 
         const tasksByStage = {};
@@ -180,11 +185,20 @@ export default function Index() {
             }
         });
 
-        return { columns, tasks: tasksByStage };
+        let boardForecast = 0;
+        columns.forEach(col => {
+            const records = (tasksByStage[col.id] || []).map((t: any) => t.lead);
+            const forecast = stageForecast(records, col.probability);
+            boardForecast += forecast;
+            col.subtitle = `${formatCurrency(stageRevenue(records))} · ${col.probability}% → ${formatCurrency(forecast)}`;
+        });
+
+        return { columns, tasks: tasksByStage, boardForecast };
     };
 
     const LeadCard = ({ task }: { task: any }) => {
         const lead = task.lead;
+        const na = nextActivity(lead.tasks);
         const isOverdue = task.due_date && new Date(task.due_date) < new Date();
 
         const handleDragStart = (e: React.DragEvent) => {
@@ -199,15 +213,20 @@ export default function Index() {
                 onDragStart={handleDragStart}
             >
                 <div className="flex items-start justify-between mb-2">
-                    <h4
-                        className="font-medium text-sm text-gray-900 leading-tight pr-2 cursor-pointer hover:text-primary hover:underline"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            router.get(route('lead.leads.show', lead.id));
-                        }}
-                    >
-                        {task.title}
-                    </h4>
+                    <div className="flex items-center gap-2 pr-2 min-w-0">
+                        <h4
+                            className="font-medium text-sm text-gray-900 leading-tight cursor-pointer hover:text-primary hover:underline truncate"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                router.get(route('lead.leads.show', lead.id));
+                            }}
+                        >
+                            {task.title}
+                        </h4>
+                        <span className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded ${band(lead.score).className}`}>
+                            {band(lead.score).label} {lead.score ?? 0}
+                        </span>
+                    </div>
                     <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100">
@@ -235,6 +254,30 @@ export default function Index() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                 </div>
+
+                {(lead.price || lead.expected_close_date) && (
+                    <div className="flex items-center justify-between mb-2 text-xs">
+                        <span className="inline-flex items-center gap-1 font-semibold text-green-600">
+                            <DollarSignIcon className="h-3 w-3" />{formatCurrency(lead.price || 0)}
+                        </span>
+                        <span className="flex items-center gap-2 text-gray-500">
+                            <span>{stages?.find((s: any) => s.id?.toString() === lead.stage_id?.toString())?.probability ?? 0}%</span>
+                            {lead.expected_close_date && (
+                                <span className="inline-flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />{formatDate(lead.expected_close_date)}
+                                </span>
+                            )}
+                        </span>
+                    </div>
+                )}
+
+                {na && (
+                    <div className="flex items-center gap-1.5 mb-2 text-xs">
+                        <span className={`h-2 w-2 rounded-full ${na.state === 'overdue' ? 'bg-red-500' : na.state === 'today' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                        <span className="text-gray-600">{ACTIVITY_TYPES[na.type] || na.type}</span>
+                        <span className="text-gray-400">· {formatDate(na.date)}</span>
+                    </div>
+                )}
 
                 {task.description && (
                     <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
@@ -369,6 +412,16 @@ export default function Index() {
             key: 'subject',
             header: t('Subject'),
             sortable: true
+        },
+        {
+            key: 'score',
+            header: t('Score'),
+            sortable: true,
+            render: (_value: any, row: any) => (
+                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${band(row.score).className}`}>
+                    {band(row.score).label} {row.score ?? 0}
+                </span>
+            )
         },
         {
             key: 'stage',
@@ -613,15 +666,21 @@ export default function Index() {
 
             {viewMode === 'kanban' ? (
                 (() => {
-                    const { columns, tasks } = getKanbanData();
+                    const { columns, tasks, boardForecast } = getKanbanData();
                     return (
-                        <KanbanBoard
-                            tasks={tasks}
-                            columns={columns}
-                            onMove={handleMove}
-                            taskCard={LeadCard}
-                            kanbanActions={null}
-                        />
+                        <div>
+                            <div className="mb-4 flex items-center gap-2 text-sm">
+                                <span className="text-gray-500">{t('Weighted forecast')}:</span>
+                                <span className="font-semibold text-green-600">{formatCurrency(boardForecast)}</span>
+                            </div>
+                            <KanbanBoard
+                                tasks={tasks}
+                                columns={columns}
+                                onMove={handleMove}
+                                taskCard={LeadCard}
+                                kanbanActions={null}
+                            />
+                        </div>
                     );
                 })()
             ) : (

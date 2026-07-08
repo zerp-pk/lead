@@ -4,6 +4,7 @@ export interface LeadStage {
     id: number;
     name: string;
     order: number;
+    probability?: number;
     pipeline_id?: number;
     pipeline?: Pipeline;
     created_at: string;
@@ -12,6 +13,7 @@ export interface LeadStage {
 export interface LeadStageFormData {
     name: string;
     order: string;
+    probability: string;
     pipeline_id: string;
 }
 

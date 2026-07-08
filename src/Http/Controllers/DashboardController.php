@@ -191,6 +191,7 @@ class DashboardController extends Controller
                 'dealCallsChart' => $dealCallsChart,
                 'dealStageChart' => $dealStageChart,
                 'pipelines' => $pipelines,
+                'myActivities' => \Zerp\Lead\Support\Activities::forUser($user, 6),
                 'message' => __('Lead Dashboard - Manage your leads and deals efficiently.')
             ]);
         }

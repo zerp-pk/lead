@@ -5,6 +5,7 @@ namespace Zerp\Lead\Http\Controllers;
 use App\Models\EmailTemplate;
 use App\Models\User;
 use Zerp\Lead\Models\Lead;
+use Zerp\Lead\Support\LeadScoring;
 use Zerp\Lead\Http\Requests\StoreLeadRequest;
 use Zerp\Lead\Http\Requests\UpdateLeadRequest;
 use Illuminate\Routing\Controller;
@@ -80,7 +81,8 @@ class LeadController extends Controller
                 $defaultPipelineId = $pipeline ? $pipeline->id : null;
             }
             
-            $leads = Lead::with(['stage', 'user', 'userLeads.user'])
+            $leads = Lead::with(['stage', 'user', 'userLeads.user',
+                    'tasks' => fn($q) => $q->where('status', 'On Going')->select('id', 'lead_id', 'type', 'date', 'status')])
                 ->withCount(['tasks', 'complete_tasks'])
                 ->where(function ($q) {
                     if (Auth::user()->can('manage-any-leads')) {
@@ -122,7 +124,7 @@ class LeadController extends Controller
                 ->get();
 
             $pipelines = Pipeline::where('created_by', creatorId())->select('id', 'name')->get();
-            $stages = LeadStage::where('created_by', creatorId())->select('id', 'name', 'pipeline_id')->get();
+            $stages = LeadStage::where('created_by', creatorId())->select('id', 'name', 'probability', 'pipeline_id')->get();
             $labels = Label::with('pipeline')->where('created_by', creatorId())->select('id', 'name', 'color', 'pipeline_id')->get();
             $sources = Source::where('created_by', creatorId())->get(['id', 'name']);
             $products = module_is_active('ProductService') ? ProductServiceItem::where('created_by', creatorId())->get(['id', 'name']) : [];
@@ -169,6 +171,8 @@ class LeadController extends Controller
                 $lead->name           = $request->name;
                 $lead->email          = $request->email;
                 $lead->subject        = $request->subject;
+                $lead->price          = $request->price;
+                $lead->expected_close_date = $request->expected_close_date;
                 $lead->user_id        = $request->user_id;
                 $lead->pipeline_id    = $pipeline->id;
                 $lead->stage_id       = $stage->id;
@@ -202,6 +206,7 @@ class LeadController extends Controller
                 }
             }
             CreateLead::dispatch($request, $lead);
+            LeadScoring::recompute($lead);
 
             $resp = ['is_success' => true, 'error' => ''];
             if (!empty(company_setting('Lead Assigned')) && company_setting('Lead Assigned')  == true) {
@@ -304,6 +309,8 @@ class LeadController extends Controller
                 $lead->name        = $validated['name'];
                 $lead->email       = $validated['email'];
                 $lead->subject     = $validated['subject'];
+                $lead->price       = $validated['price'] ?? $lead->price;
+                $lead->expected_close_date = $validated['expected_close_date'] ?? $lead->expected_close_date;
                 $lead->user_id     = $validated['user_id'];
                 $lead->phone       = $validated['phone'];
                 $lead->date        = $validated['date'];
@@ -316,6 +323,7 @@ class LeadController extends Controller
                 $lead->save();
 
                 UpdateLead::dispatch($request, $lead);
+                LeadScoring::recompute($lead);
 
                 return back()->with('success', __('The lead details are updated successfully.'));
             } else {
@@ -598,10 +606,21 @@ class LeadController extends Controller
 
             foreach ($additionalImages as $filePath) {
                 $fileName = basename($filePath);
+                $media = \App\Services\MediaAttachmentService::resolveOrBackfill(
+                    $fileName,
+                    Lead::class,
+                    $lead->id,
+                    'lead_files',
+                    Auth::id(),
+                    creatorId(),
+                    \App\Services\MediaAttachmentService::ensureDirectory('Lead Files', creatorId(), Auth::id())
+                );
+
                 LeadFile::create([
                     'lead_id' => $lead->id,
                     'file_name' => $fileName,
                     'file_path' => $fileName,
+                    'media_id' => $media?->id,
                 ]);
                 LeadUploadFile::dispatch($request, $lead);
             }
@@ -625,7 +644,11 @@ class LeadController extends Controller
             $file = LeadFile::where('id', $fileId)->where('lead_id', $lead->id)->first();
             if ($file) {
                 DestroyLeadFile::dispatch($lead);
-                \Storage::disk('public')->delete($file->file_path);
+                if ($file->media_id && $file->media) {
+                    \App\Services\MediaAttachmentService::deleteMedia($file->media);
+                } else {
+                    \Storage::disk('public')->delete($file->file_path);
+                }
                 $file->delete();
             }
 
@@ -651,6 +674,9 @@ class LeadController extends Controller
             $call->call_result = $request->call_result;
             $call->save();
             LeadAddCall::dispatch($request, $lead);
+            if ($lead) {
+                LeadScoring::recompute($lead);
+            }
 
             LeadActivityLog::create(
                 [
@@ -691,8 +717,12 @@ class LeadController extends Controller
     {
         if (Auth::user()->can('edit-leads')) {
             $call = LeadCall::find($callId);
+            $lead = $call ? Lead::find($call->lead_id) : null;
             DestroyLeadCall::dispatch($call);
             $call->delete();
+            if ($lead) {
+                LeadScoring::recompute($lead);
+            }
 
             return back()->with('success', __('The call has been deleted.'));
         } else {
@@ -830,7 +860,8 @@ class LeadController extends Controller
             }
             $deal              = new Deal();
             $deal->name        = $request->name;
-            $deal->price       = $request->price ?? 0;
+            $deal->price       = $request->price ?? $lead->price ?? 0;
+            $deal->expected_close_date = $lead->expected_close_date;
             $deal->pipeline_id = $lead->pipeline_id;
             $deal->stage_id    = $stage->id;
             $deal->sources     = in_array('sources', $request->is_transfer ?? []) ? $lead->sources : null;

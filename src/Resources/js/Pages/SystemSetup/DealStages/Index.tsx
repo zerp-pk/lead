@@ -208,6 +208,7 @@ export default function Index() {
                                                             </span>
                                                             <div>
                                                                 <h4 className="font-medium text-gray-900">{stage.name}</h4>
+                                                                <span className="text-xs text-gray-500">{t('Win Probability')}: {stage.probability ?? 0}%</span>
                                                             </div>
                                                         </div>
                                                         <div className="flex gap-1">

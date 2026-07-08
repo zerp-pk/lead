@@ -7,6 +7,9 @@ export interface Lead {
     name: string;
     email: any;
     subject: string;
+    price?: number | string;
+    expected_close_date?: string;
+    score?: number;
     user_id?: number;
     pipeline_id?: number;
     stage_id?: number;
@@ -36,6 +39,8 @@ export interface CreateLeadFormData {
     user_id: string;
     name: string;
     email: string;
+    price?: string;
+    expected_close_date?: string;
     phone: string;
     date: string;
 }
@@ -45,6 +50,8 @@ export interface EditLeadFormData {
     user_id: string;
     name: string;
     email: string;
+    price?: string;
+    expected_close_date?: string;
     phone: string;
     date: string;
     pipeline_id: string;

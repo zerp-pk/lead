@@ -14,6 +14,7 @@ export default function Edit({ leadstage, onSuccess, pipelines }: EditLeadStageP
     const { data, setData, put, processing, errors } = useForm<LeadStageFormData>({
         name: leadstage.name ?? '',
         order: leadstage.order ?? '',
+        probability: leadstage.probability?.toString() ?? '10',
         pipeline_id: leadstage.pipeline_id?.toString() || '',
     });
 
@@ -43,8 +44,22 @@ export default function Edit({ leadstage, onSuccess, pipelines }: EditLeadStageP
                         required
                     />
                     <InputError message={errors.name} />
-                </div>                           
-                
+                </div>
+
+                <div>
+                    <Label htmlFor="probability">{t('Win Probability (%)')}</Label>
+                    <Input
+                        id="probability"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={data.probability}
+                        onChange={(e) => setData('probability', e.target.value)}
+                        placeholder="10"
+                    />
+                    <InputError message={errors.probability} />
+                </div>
+
                 <div>
                     <Label htmlFor="pipeline_id">{t('Pipeline')}</Label>
                     <Select value={data.pipeline_id?.toString() || ''} onValueChange={(value) => setData('pipeline_id', value)}>

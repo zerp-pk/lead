@@ -18,6 +18,7 @@ export default function Create({ onSuccess }: CreateDealProps) {
     const { data, setData, post, processing, errors } = useForm<CreateDealFormData>({
         name: '',
         price: '0',
+        expected_close_date: '',
         phone: '',
         clients: [],
     });
@@ -65,6 +66,17 @@ export default function Create({ onSuccess }: CreateDealProps) {
                     />
                 </div>
                 
+                <div>
+                    <Label htmlFor="expected_close_date">{t('Expected Closing')}</Label>
+                    <Input
+                        id="expected_close_date"
+                        type="date"
+                        value={data.expected_close_date}
+                        onChange={(e) => setData('expected_close_date', e.target.value)}
+                    />
+                    <InputError message={errors.expected_close_date} />
+                </div>
+
                 <div>
                     <PhoneInputComponent
                         label={t('Phone No')}

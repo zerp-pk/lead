@@ -10,6 +10,7 @@ class DealTask extends Model
     protected $fillable = [
         'deal_id',
         'name',
+        'type',
         'date',
         'time',
         'priority',
@@ -35,5 +36,12 @@ class DealTask extends Model
     public static $status = [
         0 => 'On Going',
         1 => 'Completed'
+    ];
+    // Activity types (Odoo-style). Stored as the key string; default 'todo'.
+    public static $types = [
+        'todo'    => 'To-Do',
+        'call'    => 'Call',
+        'email'   => 'Email',
+        'meeting' => 'Meeting',
     ];
 }

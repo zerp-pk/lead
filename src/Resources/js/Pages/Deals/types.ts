@@ -8,6 +8,7 @@ export interface Pipeline {
 export interface Stage {
     id: number;
     name: string;
+    probability?: number;
 }
 
 export interface Group {
@@ -38,6 +39,7 @@ export interface Deal {
     id: number;
     name: string;
     price: number;
+    expected_close_date?: string;
     pipeline_id: number;
     stage_id: number;
     group_id?: number;
@@ -48,6 +50,8 @@ export interface Deal {
     phone?: string;
     permissions?: string[];
     status: string;
+    lost_reason_id?: number | null;
+    lost_reason?: { id: number; name: string } | null;
     is_active: boolean;
     pipeline?: Pipeline;
     stage?: Stage;
@@ -64,6 +68,7 @@ export interface Deal {
 export interface CreateDealFormData {
     name: string;
     price: string;
+    expected_close_date?: string;
     pipeline_id: string;
     stage_id: string;
     group_id: string;
@@ -119,6 +124,7 @@ export interface DealsIndexProps {
     sources: any[];
     products: any[];
     permissions: any[];
+    lostReasons: any[];
     [key: string]: unknown;
 }
 

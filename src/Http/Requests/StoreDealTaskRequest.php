@@ -16,6 +16,7 @@ class StoreDealTaskRequest extends FormRequest
         return [
             'deal_id' => 'required|exists:deals,id',
             'name' => 'required|string|max:255',
+            'type' => 'nullable|in:todo,call,email,meeting',
             'date' => 'required|date',
             'time' => 'required',
             'priority' => 'required|in:Low,Medium,High',

@@ -13,6 +13,7 @@ use Zerp\Lead\Http\Requests\StoreLeadTaskRequest;
 use Zerp\Lead\Http\Requests\UpdateLeadTaskRequest;
 use Zerp\Lead\Models\Lead;
 use Zerp\Lead\Models\LeadActivityLog;
+use Zerp\Lead\Support\LeadScoring;
 use Zerp\Lead\Events\CreateLeadTask;
 use Zerp\Lead\Events\UpdateLeadTask;
 use Zerp\Lead\Events\DestroyLeadTask;
@@ -63,6 +64,7 @@ class LeadTaskController extends Controller
             $leadTask             = new LeadTask();
             $leadTask->lead_id    = $validated['lead_id'];
             $leadTask->name       = $validated['name'];
+            $leadTask->type       = $validated['type'] ?? 'todo';
             $leadTask->date       = $validated['date'];
             $leadTask->time       = $validated['time'];
             $leadTask->priority   = $validated['priority'];
@@ -71,6 +73,9 @@ class LeadTaskController extends Controller
             $leadTask->creator_id = Auth::id();
             $leadTask->save();
             CreateLeadTask::dispatch($request, $leadTask);
+            if ($lead = Lead::find($validated['lead_id'])) {
+                LeadScoring::recompute($lead);
+            }
             LeadActivityLog::create(
                 [
                     'user_id' => $usr->id,
@@ -111,6 +116,7 @@ class LeadTaskController extends Controller
             $validated = $request->validated();
 
             $task->name     = $validated['name'];
+            $task->type     = $validated['type'] ?? $task->type;
             $task->date     = $validated['date'];
             $task->time     = $validated['time'];
             $task->priority = $validated['priority'];
@@ -130,8 +136,12 @@ class LeadTaskController extends Controller
     {
         if(Auth::user()->can('delete-lead-tasks')){
            
+            $lead = Lead::find($task->lead_id);
             DestroyLeadTask::dispatch($task);
             $task->delete();
+            if ($lead) {
+                LeadScoring::recompute($lead);
+            }
             return back()->with('success', __('The task has been deleted.'));
         }
         else{

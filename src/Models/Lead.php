@@ -15,6 +15,8 @@ class Lead extends Model
         'name',
         'email',
         'subject',
+        'price',
+        'expected_close_date',
         'user_id',
         'pipeline_id',
         'stage_id',
@@ -26,6 +28,7 @@ class Lead extends Model
         'phone',
         'is_active',
         'is_converted',
+        'score',
         'date',
         'creator_id',
         'created_by',
@@ -39,6 +42,9 @@ class Lead extends Model
             'stage_id' => 'integer',
             'is_active' => 'boolean',
             'date' => 'date',
+            'price' => 'decimal:2',
+            'expected_close_date' => 'date',
+            'score' => 'integer',
             'creator_id' => 'integer'
         ];
     }

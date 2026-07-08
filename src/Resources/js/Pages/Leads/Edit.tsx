@@ -28,6 +28,8 @@ export default function EditLead({ lead, sources: propSources, products: propPro
         user_id: lead.user_id?.toString() || '',
         name: lead.name ?? '',
         email: lead.email ?? '',
+        price: lead.price?.toString() ?? '',
+        expected_close_date: lead.expected_close_date ? lead.expected_close_date.substring(0, 10) : '',
         phone: lead.phone ?? '',
         date: lead.date || '',
         pipeline_id: lead.pipeline_id?.toString() || '',
@@ -52,6 +54,8 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                 user_id: lead.user_id?.toString() || '',
                 name: lead.name ?? '',
                 email: lead.email ?? '',
+                price: lead.price?.toString() ?? '',
+                expected_close_date: lead.expected_close_date ? lead.expected_close_date.substring(0, 10) : '',
                 phone: lead.phone ?? '',
                 date: lead.date || '',
                 pipeline_id: lead.pipeline_id?.toString() || '',
@@ -185,6 +189,32 @@ export default function EditLead({ lead, sources: propSources, products: propPro
                             placeholder={t('Select Follow Up Date')}
                         />
                         <InputError message={errors.date} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="price">{t('Expected Revenue')}</Label>
+                        <Input
+                            id="price"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={data.price}
+                            onChange={(e) => setData('price', e.target.value)}
+                            placeholder={t('Enter Expected Revenue')}
+                        />
+                        <InputError message={errors.price} />
+                    </div>
+                    <div>
+                        <Label htmlFor="expected_close_date">{t('Expected Closing')}</Label>
+                        <Input
+                            id="expected_close_date"
+                            type="date"
+                            value={data.expected_close_date}
+                            onChange={(e) => setData('expected_close_date', e.target.value)}
+                        />
+                        <InputError message={errors.expected_close_date} />
                     </div>
                 </div>
 

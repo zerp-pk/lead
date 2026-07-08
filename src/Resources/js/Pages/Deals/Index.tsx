@@ -6,9 +6,9 @@ import AuthenticatedLayout from "@/layouts/authenticated-layout";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { Plus, Edit as EditIcon, Trash2, Eye, DollarSign as DollarSignIcon, Download, FileImage, Tag, MoreVertical, Calendar, Kanban, List, ShoppingCart, Globe, CheckSquare } from "lucide-react";
+import { Plus, Edit as EditIcon, Trash2, Eye, DollarSign as DollarSignIcon, Download, FileImage, Tag, MoreVertical, Calendar, Kanban, List, ShoppingCart, Globe, CheckSquare, Trophy, XCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton } from '@/components/ui/filter-button';
 import { Pagination } from "@/components/ui/pagination";
@@ -27,13 +27,29 @@ import LabelView from './LabelView';
 import NoRecordsFound from '@/components/no-records-found';
 import { Deal, DealsIndexProps, DealFilters, DealModalState } from './types';
 import { formatDate, formatTime, formatDateTime, formatCurrency, getImagePath } from '@/utils/helpers';
+import { stageForecast, stageRevenue } from '../../utils/forecast.mjs';
+import { nextActivity, ACTIVITY_TYPES } from '../../utils/activities.mjs';
 import { usePageButtons } from '@/hooks/usePageButtons';
 
 
 export default function Index() {
     const { t } = useTranslation();
-    const { deals, auth, pipelines, stages, groups, users, sources, products, permissions } = usePage<DealsIndexProps>().props;
+    const { deals, auth, pipelines, stages, groups, users, sources, products, permissions, lostReasons } = usePage<DealsIndexProps>().props;
     const urlParams = new URLSearchParams(window.location.search);
+
+    const [lostDialogDeal, setLostDialogDeal] = useState<any | null>(null);
+    const [lostReasonId, setLostReasonId] = useState('');
+
+    const handleMarkWon = (deal: any) => {
+        router.post(route('lead.deals.won', deal.id), {}, { preserveScroll: true });
+    };
+    const submitMarkLost = () => {
+        if (!lostDialogDeal || !lostReasonId) return;
+        router.post(route('lead.deals.lost', lostDialogDeal.id), { lost_reason_id: lostReasonId }, {
+            preserveScroll: true,
+            onSuccess: () => { setLostDialogDeal(null); setLostReasonId(''); },
+        });
+    };
 
     const [filters, setFilters] = useState<DealFilters>({
         name: urlParams.get('name') || '',
@@ -133,7 +149,9 @@ export default function Index() {
         const columns = filteredStages.map((stage, index) => ({
             id: stage.id.toString(),
             title: stage.name,
-            color: colors[index % colors.length]
+            color: colors[index % colors.length],
+            probability: stage.probability ?? 0,
+            subtitle: ''
         }));
 
         const tasksByStage = {};
@@ -169,11 +187,20 @@ export default function Index() {
             }
         });
 
-        return { columns, tasks: tasksByStage };
+        let boardForecast = 0;
+        columns.forEach(col => {
+            const records = (tasksByStage[col.id] || []).map((t: any) => t.deal);
+            const forecast = stageForecast(records, col.probability);
+            boardForecast += forecast;
+            col.subtitle = `${formatCurrency(stageRevenue(records))} · ${col.probability}% → ${formatCurrency(forecast)}`;
+        });
+
+        return { columns, tasks: tasksByStage, boardForecast };
     };
 
     const DealCard = ({ task }: { task: any }) => {
         const deal = task.deal;
+        const na = nextActivity(deal.tasks);
 
         const handleDragStart = (e: React.DragEvent) => {
             e.dataTransfer.setData('application/json', JSON.stringify({ taskId: task.id, fromStatus: task.status }));
@@ -215,6 +242,18 @@ export default function Index() {
                                     {t('Edit')}
                                 </DropdownMenuItem>
                             )}
+                            {auth.user?.permissions?.includes('edit-deals') && deal.status !== 'Won' && (
+                                <DropdownMenuItem onClick={() => handleMarkWon(deal)} className="text-green-600">
+                                    <Trophy className="h-3 w-3 mr-2" />
+                                    {t('Mark Won')}
+                                </DropdownMenuItem>
+                            )}
+                            {auth.user?.permissions?.includes('edit-deals') && deal.status !== 'Lost' && (
+                                <DropdownMenuItem onClick={() => { setLostDialogDeal(deal); setLostReasonId(''); }} className="text-red-600">
+                                    <XCircle className="h-3 w-3 mr-2" />
+                                    {t('Mark Lost')}
+                                </DropdownMenuItem>
+                            )}
                             {auth.user?.permissions?.includes('delete-deals') && (
                                 <DropdownMenuItem onClick={() => openDeleteDialog(deal.id)} className="text-red-600">
                                     <Trash2 className="h-3 w-3 mr-2" />
@@ -225,7 +264,37 @@ export default function Index() {
                     </DropdownMenu>
                 </div>
 
+                {(deal.status === 'Won' || deal.status === 'Lost') && (
+                    <div className="mb-2">
+                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded ${deal.status === 'Won' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {deal.status === 'Won' ? <Trophy className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {t(deal.status)}
+                            {deal.status === 'Lost' && deal.lost_reason?.name ? ` · ${deal.lost_reason.name}` : ''}
+                        </span>
+                    </div>
+                )}
 
+                <div className="flex items-center justify-between mb-2 text-xs">
+                    <span className="inline-flex items-center gap-1 font-semibold text-green-600">
+                        <DollarSignIcon className="h-3 w-3" />{formatCurrency(deal.price || 0)}
+                    </span>
+                    <span className="flex items-center gap-2 text-gray-500">
+                        <span>{stages?.find((s: any) => s.id?.toString() === deal.stage_id?.toString())?.probability ?? 0}%</span>
+                        {deal.expected_close_date && (
+                            <span className="inline-flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />{formatDate(deal.expected_close_date)}
+                            </span>
+                        )}
+                    </span>
+                </div>
+
+                {na && (
+                    <div className="flex items-center gap-1.5 mb-2 text-xs">
+                        <span className={`h-2 w-2 rounded-full ${na.state === 'overdue' ? 'bg-red-500' : na.state === 'today' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                        <span className="text-gray-600">{ACTIVITY_TYPES[na.type] || na.type}</span>
+                        <span className="text-gray-400">· {formatDate(na.date)}</span>
+                    </div>
+                )}
 
                 <div className="flex items-center justify-between mb-3">
                     <Tooltip>
@@ -543,15 +612,21 @@ export default function Index() {
 
             {viewMode === 'kanban' ? (
                 (() => {
-                    const { columns, tasks } = getKanbanData();
+                    const { columns, tasks, boardForecast } = getKanbanData();
                     return (
-                        <KanbanBoard
-                            tasks={tasks}
-                            columns={columns}
-                            onMove={handleMove}
-                            taskCard={DealCard}
-                            kanbanActions={null}
-                        />
+                        <div>
+                            <div className="mb-4 flex items-center gap-2 text-sm">
+                                <span className="text-gray-500">{t('Weighted forecast')}:</span>
+                                <span className="font-semibold text-green-600">{formatCurrency(boardForecast)}</span>
+                            </div>
+                            <KanbanBoard
+                                tasks={tasks}
+                                columns={columns}
+                                onMove={handleMove}
+                                taskCard={DealCard}
+                                kanbanActions={null}
+                            />
+                        </div>
                     );
                 })()
             ) : (
@@ -699,6 +774,34 @@ export default function Index() {
                 onConfirm={confirmDelete}
                 variant="destructive"
             />
+
+            <Dialog open={!!lostDialogDeal} onOpenChange={(open) => { if (!open) { setLostDialogDeal(null); setLostReasonId(''); } }}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('Mark Deal as Lost')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-2">
+                        <label className="text-sm font-medium">{t('Lost Reason')}</label>
+                        <Select value={lostReasonId} onValueChange={setLostReasonId}>
+                            <SelectTrigger className="mt-1">
+                                <SelectValue placeholder={t('Select a reason')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {(lostReasons || []).map((r: any) => (
+                                    <SelectItem key={r.id} value={r.id.toString()}>{r.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {(!lostReasons || lostReasons.length === 0) && (
+                            <p className="text-xs text-amber-600 mt-2">{t('No lost reasons defined yet. Add them in System Setup.')}</p>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => { setLostDialogDeal(null); setLostReasonId(''); }}>{t('Cancel')}</Button>
+                        <Button variant="destructive" disabled={!lostReasonId} onClick={submitMarkLost}>{t('Mark Lost')}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AuthenticatedLayout>
     );
 }

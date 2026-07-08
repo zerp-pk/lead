@@ -28,9 +28,10 @@ interface LeadProps {
     dealCallsChart?: any[];
     dealStageChart?: any[];
     pipelines?: any[];
+    myActivities?: any[];
 }
 
-export default function CompanyDashboard({ message, stats, recentDeals, recentLeads, calendarEvents, dealCallsChart, dealStageChart, pipelines }: LeadProps) {
+export default function CompanyDashboard({ message, stats, recentDeals, recentLeads, calendarEvents, dealCallsChart, dealStageChart, pipelines, myActivities = [] }: LeadProps) {
     const { t } = useTranslation();
     const [selectedPipeline, setSelectedPipeline] = useState(pipelines?.[0]?.id?.toString() || '');
     
@@ -81,6 +82,37 @@ export default function CompanyDashboard({ message, stats, recentDeals, recentLe
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* My Activities */}
+                <Card className="mb-6">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Clock className="h-5 w-5" />{t('My Activities')}
+                        </CardTitle>
+                        <button className="text-xs text-primary hover:underline" onClick={() => router.visit(route('lead.activities.index'))}>
+                            {t('View all')}
+                        </button>
+                    </CardHeader>
+                    <CardContent>
+                        {myActivities.length === 0 ? (
+                            <p className="text-sm text-gray-400 py-4 text-center">{t('No open activities.')}</p>
+                        ) : (
+                            <div className="divide-y">
+                                {myActivities.map((a: any) => (
+                                    <button
+                                        key={`${a.record_type}-${a.id}`}
+                                        onClick={() => a.url && router.visit(a.url)}
+                                        className="w-full flex items-center gap-3 py-2 text-left hover:bg-gray-50 transition-colors rounded"
+                                    >
+                                        <span className={`h-2 w-2 rounded-full shrink-0 ${a.state === 'overdue' ? 'bg-red-500' : a.state === 'today' ? 'bg-amber-500' : 'bg-green-500'}`} />
+                                        <span className="flex-1 min-w-0 text-sm truncate">{a.name}<span className="text-gray-400"> · {a.record_name}</span></span>
+                                        <span className="text-xs text-gray-500 shrink-0">{a.date ? formatDate(a.date) : ''}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">

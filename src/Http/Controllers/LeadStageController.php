@@ -19,7 +19,7 @@ class LeadStageController extends Controller
     public function index()
     {
         if(Auth::user()->can('manage-lead-stages')){
-            $leadstages = LeadStage::select('id', 'name', 'order', 'pipeline_id', 'created_at')
+            $leadstages = LeadStage::select('id', 'name', 'order', 'probability', 'pipeline_id', 'created_at')
                 ->where(function($q) {
                     if(Auth::user()->can('manage-any-lead-stages')) {
                         $q->where('created_by', creatorId());
@@ -54,6 +54,7 @@ class LeadStageController extends Controller
             $leadstage              = new LeadStage();
             $leadstage->name        = $validated['name'];
             $leadstage->pipeline_id = $validated['pipeline_id'];
+            $leadstage->probability = $validated['probability'] ?? 10;
             $leadstage->order       = $maxOrder + 1;
             $leadstage->creator_id  = Auth::id();
             $leadstage->created_by  = creatorId();
@@ -92,6 +93,7 @@ class LeadStageController extends Controller
 
             $leadstage->name = $validated['name'];
             $leadstage->pipeline_id = $newPipelineId;
+            $leadstage->probability = $validated['probability'] ?? $leadstage->probability;
             $leadstage->save();
 
             UpdateLeadStage::dispatch($request, $leadstage);

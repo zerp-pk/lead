@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Calendar } from 'lucide-react';
-import { formatDate } from '@/utils/helpers';
+import { formatDate, formatCurrency } from '@/utils/helpers';
 import { DatePicker } from "@/components/ui/date-picker";
+import { winRate, funnelWidths } from '../../utils/reports.mjs';
 
 interface DealReportsProps {
     weeklyDealConversions: any[];
@@ -20,11 +21,13 @@ interface DealReportsProps {
     staffDeals: any[];
     clientDeals: any[];
     pipelineDeals: any[];
+    funnel: { name: string; count: number; value: number }[];
+    winLoss: { won: number; lost: number; open: number; won_value: number; win_rate: number | null };
 }
 
 export default function DealReports() {
     const { t } = useTranslation();
-    const { weeklyDealConversions, dealSourcesConversion, monthlyDeals, staffDeals, clientDeals, pipelineDeals } = usePage<DealReportsProps>().props;
+    const { weeklyDealConversions, dealSourcesConversion, monthlyDeals, staffDeals, clientDeals, pipelineDeals, funnel = [], winLoss } = usePage<DealReportsProps>().props;
     
     const [selectedMonth, setSelectedMonth] = useState('all');
     const [fromDate, setFromDate] = useState(new URLSearchParams(window.location.search).get('from_date') || '');
@@ -74,6 +77,68 @@ export default function DealReports() {
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-6">
+                    {/* Win/Loss summary */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <Card className="border-green-200 bg-green-50/50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-medium text-green-700">{t('Won')}</p>
+                                <p className="text-2xl font-bold text-green-700">{winLoss?.won ?? 0}</p>
+                                <p className="text-xs text-green-600">{formatCurrency(winLoss?.won_value ?? 0)}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-red-200 bg-red-50/50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-medium text-red-700">{t('Lost')}</p>
+                                <p className="text-2xl font-bold text-red-700">{winLoss?.lost ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-blue-200 bg-blue-50/50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-medium text-blue-700">{t('Open')}</p>
+                                <p className="text-2xl font-bold text-blue-700">{winLoss?.open ?? 0}</p>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-amber-200 bg-amber-50/50">
+                            <CardContent className="p-4">
+                                <p className="text-xs font-medium text-amber-700">{t('Win Rate')}</p>
+                                <p className="text-2xl font-bold text-amber-700">
+                                    {winLoss?.win_rate === null || winLoss?.win_rate === undefined ? '—' : `${winLoss.win_rate}%`}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Sales funnel */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{t('Sales Funnel')}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {funnel.length === 0 ? (
+                                <p className="text-sm text-gray-400 py-6 text-center">{t('No open deals to chart.')}</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {funnelWidths(funnel).map((stage: any, i: number) => (
+                                        <div key={i}>
+                                            <div className="flex justify-between text-xs mb-1">
+                                                <span className="font-medium text-gray-700">{stage.name}</span>
+                                                <span className="text-gray-500">{stage.count} · {formatCurrency(stage.value)}</span>
+                                            </div>
+                                            <div className="h-6 bg-gray-100 rounded overflow-hidden">
+                                                <div
+                                                    className="h-full rounded flex items-center justify-end pr-2 text-[10px] text-white font-medium"
+                                                    style={{ width: `${Math.max(stage.width, 4)}%`, backgroundColor: COLORS[i % COLORS.length] }}
+                                                >
+                                                    {stage.count > 0 ? stage.count : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
                             <CardHeader>

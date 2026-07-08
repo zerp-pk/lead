@@ -73,8 +73,9 @@ class DealController extends Controller
                 $defaultPipelineId = $pipeline ? $pipeline->id : null;
             }
             
-            $deals = Deal::select('id', 'name', 'price', 'pipeline_id', 'stage_id', 'phone', 'status', 'sources', 'products', 'notes', 'labels', 'created_at')
-                ->with(['pipeline:id,name', 'stage:id,name', 'creator:id,name', 'users:id,name,avatar'])
+            $deals = Deal::select('id', 'name', 'price', 'expected_close_date', 'pipeline_id', 'stage_id', 'phone', 'status', 'lost_reason_id', 'sources', 'products', 'notes', 'labels', 'created_at')
+                ->with(['pipeline:id,name', 'stage:id,name', 'creator:id,name', 'users:id,name,avatar', 'lostReason:id,name',
+                    'tasks' => fn($q) => $q->where('status', 'On Going')->select('id', 'deal_id', 'type', 'date', 'status')])
                 ->withCount(['tasks', 'complete_tasks'])
                 ->where(function ($q) {
                     if (Auth::user()->can('manage-any-deals')) {
@@ -104,11 +105,12 @@ class DealController extends Controller
                 ->withQueryString();
 
             $pipelines = Pipeline::where('created_by', creatorId())->get(['id', 'name']);
-            $stages = DealStage::where('created_by', creatorId())->get(['id', 'name', 'pipeline_id']);
+            $stages = DealStage::where('created_by', creatorId())->get(['id', 'name', 'probability', 'pipeline_id']);
             $users = User::where('created_by', creatorId())->where('type', 'client')->get(['id', 'name']);
             $sources = Source::where('created_by', creatorId())->get(['id', 'name']);
             $products = Module_is_active('ProductService') ? ProductServiceItem::where('created_by', creatorId())->get(['id', 'name']) : [];
             $labels = Label::with('pipeline')->where('created_by', creatorId())->select('id', 'name', 'color', 'pipeline_id')->get();
+            $lostReasons = \Zerp\Lead\Models\LostReason::where('created_by', creatorId())->get(['id', 'name']);
 
             return Inertia::render('Lead/Deals/Index', [
                 'deals' => $deals,
@@ -118,6 +120,7 @@ class DealController extends Controller
                 'sources' => $sources,
                 'products' => $products,
                 'labels' => $labels,
+                'lostReasons' => $lostReasons,
                 'currentPipelineId' => request('pipeline_id') ?: $defaultPipelineId,
             ]);
         } else {
@@ -149,6 +152,7 @@ class DealController extends Controller
                 $deal              = new Deal();
                 $deal->name        = $validated['name'];
                 $deal->price       = $validated['price'] ?? 0;
+                $deal->expected_close_date = $validated['expected_close_date'] ?? null;
                 $deal->pipeline_id = $pipeline->id;
                 $deal->stage_id    = $stage->id;
                 $deal->phone       = $validated['phone'];
@@ -266,6 +270,7 @@ class DealController extends Controller
             $validated = $request->validated();
             $deal->name        = $validated['name'];
             $deal->price       = $validated['price'];
+            $deal->expected_close_date = $validated['expected_close_date'] ?? $deal->expected_close_date;
             $deal->pipeline_id = $validated['pipeline_id'];
             $deal->stage_id    = $validated['stage_id'];
             $deal->phone       = $validated['phone'];
@@ -624,10 +629,21 @@ class DealController extends Controller
 
             foreach ($additionalImages as $filePath) {
                 $fileName = basename($filePath);
+                $media = \App\Services\MediaAttachmentService::resolveOrBackfill(
+                    $fileName,
+                    Deal::class,
+                    $deal->id,
+                    'deal_files',
+                    Auth::id(),
+                    creatorId(),
+                    \App\Services\MediaAttachmentService::ensureDirectory('Deal Files', creatorId(), Auth::id())
+                );
+
                 DealFile::create([
                     'deal_id' => $deal->id,
                     'file_name' => $fileName,
                     'file_path' => $fileName,
+                    'media_id' => $media?->id,
                 ]);
                 DealUploadFile::dispatch($request, $deal);
             }
@@ -651,7 +667,11 @@ class DealController extends Controller
             $file = DealFile::where('id', $fileId)->where('deal_id', $deal->id)->first();
             if ($file) {
                 DestroyDealFile::dispatch($deal);
-                \Storage::disk('public')->delete($file->file_path);
+                if ($file->media_id && $file->media) {
+                    \App\Services\MediaAttachmentService::deleteMedia($file->media);
+                } else {
+                    \Storage::disk('public')->delete($file->file_path);
+                }
                 $file->delete();
             }
 
@@ -725,5 +745,32 @@ class DealController extends Controller
         }else{
             return back()->with('error', __('Permission denied'));
         }
+    }
+
+    public function markWon(Deal $deal)
+    {
+        if (!Auth::user()->can('edit-deals')) {
+            return back()->with('error', __('Permission denied'));
+        }
+        $deal->status = 'Won';
+        $deal->lost_reason_id = null;
+        $deal->save();
+
+        return back()->with('success', __('The deal has been marked as won.'));
+    }
+
+    public function markLost(Request $request, Deal $deal)
+    {
+        if (!Auth::user()->can('edit-deals')) {
+            return back()->with('error', __('Permission denied'));
+        }
+        $validated = $request->validate([
+            'lost_reason_id' => 'required|exists:lost_reasons,id',
+        ]);
+        $deal->status = 'Lost';
+        $deal->lost_reason_id = $validated['lost_reason_id'];
+        $deal->save();
+
+        return back()->with('success', __('The deal has been marked as lost.'));
     }
 }

@@ -29,6 +29,11 @@ export const leadCompanyMenu = (t: (key: string) => string) => [
                 permission: 'manage-deals',
             },
             {
+                title: t('My Activities'),
+                href: route('lead.activities.index'),
+                permission: 'manage-lead-tasks',
+            },
+            {
                 title: t('System Setup'),
                 href: route('lead.pipelines.index'),
                 permission: 'manage-pipelines',
@@ -36,7 +41,9 @@ export const leadCompanyMenu = (t: (key: string) => string) => [
                     route('lead.lead-stages.index'),
                     route('lead.deal-stages.index'),
                     route('lead.labels.index'),
-                    route('lead.sources.index')
+                    route('lead.sources.index'),
+                    route('lead.lost-reasons.index'),
+                    route('lead.score-rules.index')
                 ],
             },
             {

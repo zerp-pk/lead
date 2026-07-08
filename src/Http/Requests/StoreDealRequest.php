@@ -15,7 +15,8 @@ class StoreDealRequest extends FormRequest
     {
         return [
             'name' => 'required|max:100',
-            'price' => 'required|numeric|min:0',            
+            'price' => 'required|numeric|min:0',
+            'expected_close_date' => 'nullable|date',
             'phone' => 'nullable|string|regex:/^\+\d{1,3}\d{9,13}$/',
             'clients'   => 'required|array|min:1',
             'clients.*' => 'integer|exists:users,id',

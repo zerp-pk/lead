@@ -286,6 +286,48 @@ class ReportController extends Controller
                 ];
             }
             
+            // Sales funnel: open deals per stage (count + value), ordered by stage.
+            $funnel = [];
+            foreach ($dealStages as $index => $stage) {
+                $stageDeals = Deal::where('created_by', creatorId())
+                    ->where('stage_id', $stage->id)
+                    ->where('status', 'Active');
+                $count = $stageDeals->count();
+                $value = (clone $stageDeals)->sum('price');
+
+                if ($isDemo && $count < 5) {
+                    $trend = [20, 15, 11, 7, 4, 2];
+                    $count = ($trend[$index % count($trend)]) + rand(-1, 1);
+                    if ($count < 0) $count = rand(1, 3);
+                    $value = $count * rand(1000, 5000);
+                }
+
+                $funnel[] = ['name' => $stage->name, 'count' => $count, 'value' => (float) $value];
+            }
+
+            // Win/Loss summary + win rate.
+            $base = fn() => Deal::where('created_by', creatorId());
+            $wonCount = $base()->where('status', 'Won')->count();
+            $lostCount = $base()->where('status', 'Lost')->count();
+            $openCount = $base()->where('status', 'Active')->count();
+            $wonValue = (float) $base()->where('status', 'Won')->sum('price');
+
+            if ($isDemo && ($wonCount + $lostCount) === 0) {
+                $wonCount = rand(8, 20);
+                $lostCount = rand(3, 12);
+                $openCount = rand(10, 25);
+                $wonValue = $wonCount * rand(2000, 6000);
+            }
+
+            $winLoss = [
+                'won' => $wonCount,
+                'lost' => $lostCount,
+                'open' => $openCount,
+                'won_value' => $wonValue,
+                // Win rate over closed deals; null when nothing has closed yet.
+                'win_rate' => ($wonCount + $lostCount) > 0 ? round($wonCount / ($wonCount + $lostCount) * 100, 1) : null,
+            ];
+
             // Get all pipelines for dropdown
             $pipelines = Pipeline::where('created_by', creatorId())->get(['id', 'name']);
             if ($isDemo && $pipelines->isEmpty()) {
@@ -303,6 +345,8 @@ class ReportController extends Controller
                 'clientDeals' => $clientDeals,
                 'pipelineDeals' => $pipelineDeals,
                 'dealStageChart' => $dealStageChart,
+                'funnel' => $funnel,
+                'winLoss' => $winLoss,
                 'pipelines' => $pipelines,
             ]);
         }
