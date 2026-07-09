@@ -48,7 +48,7 @@ class LeadScoreRuleController extends Controller
 
     public function update(Request $request, LeadScoreRule $scoreRule)
     {
-        if (!Auth::user()->can('edit-leads')) {
+        if (!Auth::user()->can('edit-leads') || $scoreRule->created_by != creatorId()) {
             return back()->with('error', __('Permission denied'));
         }
         $validated = $this->validateRule($request);
@@ -62,7 +62,7 @@ class LeadScoreRuleController extends Controller
 
     public function destroy(LeadScoreRule $scoreRule)
     {
-        if (!Auth::user()->can('delete-leads')) {
+        if (!Auth::user()->can('delete-leads') || $scoreRule->created_by != creatorId()) {
             return back()->with('error', __('Permission denied'));
         }
 

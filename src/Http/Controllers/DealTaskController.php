@@ -112,7 +112,7 @@ class DealTaskController extends Controller
 
     public function update(UpdateDealTaskRequest $request, DealTask $task)
     {
-        if(Auth::user()->can('edit-deal-tasks')){
+        if(Auth::user()->can('edit-deal-tasks') && $task->created_by == creatorId()){
             
             $validated = $request->validated();
 
@@ -135,7 +135,7 @@ class DealTaskController extends Controller
 
     public function destroy(DealTask $task)
     {
-        if(Auth::user()->can('delete-deal-tasks')){
+        if(Auth::user()->can('delete-deal-tasks') && $task->created_by == creatorId()){
            
             DestroyDealTask::dispatch($task);
             $task->delete();

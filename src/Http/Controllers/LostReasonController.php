@@ -42,7 +42,7 @@ class LostReasonController extends Controller
 
     public function update(Request $request, LostReason $lostReason)
     {
-        if (!Auth::user()->can('edit-deals')) {
+        if (!Auth::user()->can('edit-deals') || $lostReason->created_by != creatorId()) {
             return back()->with('error', __('Permission denied'));
         }
         $validated = $request->validate(['name' => 'required|max:100']);
@@ -54,7 +54,7 @@ class LostReasonController extends Controller
 
     public function destroy(LostReason $lostReason)
     {
-        if (!Auth::user()->can('delete-deals')) {
+        if (!Auth::user()->can('delete-deals') || $lostReason->created_by != creatorId()) {
             return back()->with('error', __('Permission denied'));
         }
 

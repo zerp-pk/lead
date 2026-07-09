@@ -71,7 +71,7 @@ class DealStageController extends Controller
 
     public function update(UpdateDealStageRequest $request, DealStage $dealstage)
     {
-        if(Auth::user()->can('edit-deal-stages')){
+        if(Auth::user()->can('edit-deal-stages') && $dealstage->created_by == creatorId()){
             $validated = $request->validated();
 
             $oldPipelineId = $dealstage->pipeline_id;

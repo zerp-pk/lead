@@ -266,7 +266,7 @@ class DealController extends Controller
 
     public function update(UpdateDealRequest $request, Deal $deal)
     {
-        if (Auth::user()->can('edit-deals')) {
+        if (Auth::user()->can('edit-deals') && $deal->created_by == creatorId()) {
             $validated = $request->validated();
             $deal->name        = $validated['name'];
             $deal->price       = $validated['price'];
@@ -749,7 +749,7 @@ class DealController extends Controller
 
     public function markWon(Deal $deal)
     {
-        if (!Auth::user()->can('edit-deals')) {
+        if (!Auth::user()->can('edit-deals') || $deal->created_by != creatorId()) {
             return back()->with('error', __('Permission denied'));
         }
         $deal->status = 'Won';
@@ -761,11 +761,11 @@ class DealController extends Controller
 
     public function markLost(Request $request, Deal $deal)
     {
-        if (!Auth::user()->can('edit-deals')) {
+        if (!Auth::user()->can('edit-deals') || $deal->created_by != creatorId()) {
             return back()->with('error', __('Permission denied'));
         }
         $validated = $request->validate([
-            'lost_reason_id' => 'required|exists:lost_reasons,id',
+            'lost_reason_id' => 'required|exists:lost_reasons,id,created_by,' . creatorId(),
         ]);
         $deal->status = 'Lost';
         $deal->lost_reason_id = $validated['lost_reason_id'];

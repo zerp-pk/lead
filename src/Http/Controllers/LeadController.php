@@ -301,7 +301,7 @@ class LeadController extends Controller
     public function update(UpdateLeadRequest $request, Lead $lead)
     {
         try {
-            if (Auth::user()->can('edit-leads')) {
+            if (Auth::user()->can('edit-leads') && $lead->created_by == creatorId()) {
                 $validated = $request->validated();
                 $validated['is_active'] = $request->boolean('is_active', true);
 

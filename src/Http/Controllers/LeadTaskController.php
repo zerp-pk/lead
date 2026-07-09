@@ -111,7 +111,7 @@ class LeadTaskController extends Controller
 
     public function update(UpdateLeadTaskRequest $request, LeadTask $task)
     {
-        if(Auth::user()->can('edit-lead-tasks')){
+        if(Auth::user()->can('edit-lead-tasks') && $task->created_by == creatorId()){
             
             $validated = $request->validated();
 
@@ -134,7 +134,7 @@ class LeadTaskController extends Controller
 
     public function destroy(LeadTask $task)
     {
-        if(Auth::user()->can('delete-lead-tasks')){
+        if(Auth::user()->can('delete-lead-tasks') && $task->created_by == creatorId()){
            
             $lead = Lead::find($task->lead_id);
             DestroyLeadTask::dispatch($task);
