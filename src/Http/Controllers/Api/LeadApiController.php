@@ -26,7 +26,7 @@ class LeadApiController extends Controller
         try {
             if (Auth::user()->can('manage-leads')) {
                 $validator = Validator::make($request->all(), [
-                    'pipeline_id' => 'required|integer|exists:pipelines,id'
+                    'pipeline_id' => 'required|integer|exists:pipelines,id,created_by,' . creatorId()
                 ]);
 
                 if ($validator->fails()) {
@@ -215,7 +215,7 @@ class LeadApiController extends Controller
             if (Auth::user()->can('edit-leads')) {
 
                 $validator = Validator::make($request->all(), [
-                    'lead_id'     => 'required|integer|exists:leads,id',
+                    'lead_id'     => 'required|integer|exists:leads,id,created_by,' . creatorId(),
                     'name'        => 'required|max:100',
                     'email'       => 'required|email',
                     'subject'     => 'required|max:200',
@@ -266,8 +266,8 @@ class LeadApiController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'lead_id'  => 'required|exists:leads,id',
-                'stage_id' => 'required|exists:lead_stages,id',
+                'lead_id'  => 'required|exists:leads,id,created_by,' . creatorId(),
+                'stage_id' => 'required|exists:lead_stages,id,created_by,' . creatorId(),
                 'order'    => 'required',
             ]);
 
@@ -275,10 +275,10 @@ class LeadApiController extends Controller
                 return $this->validationErrorResponse($validator->errors());
             }
 
-            $lead = Lead::find($request->lead_id);
+            $lead = Lead::findOrFail($request->lead_id);
 
             if ($lead->stage_id != $request->stage_id) {
-                $newStage = LeadStage::find($request->stage_id);
+                $newStage = LeadStage::findOrFail($request->stage_id);
 
                 LeadActivityLog::create([
                     'user_id'  => Auth::user()->id,
@@ -302,8 +302,8 @@ class LeadApiController extends Controller
     public function leadDetails(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'pipeline_id' => 'required|integer|exists:pipelines,id',
-            'lead_id'     => 'required|integer|exists:leads,id'
+            'pipeline_id' => 'required|integer|exists:pipelines,id,created_by,' . creatorId(),
+            'lead_id'     => 'required|integer|exists:leads,id,created_by,' . creatorId()
         ]);
 
         if ($validator->fails()) {
@@ -373,7 +373,7 @@ class LeadApiController extends Controller
         try {
             if (Auth::user()->can('delete-leads')) {
                 $validator = Validator::make($request->all(), [
-                    'lead_id' => 'required|exists:leads,id',
+                    'lead_id' => 'required|exists:leads,id,created_by,' . creatorId(),
                 ]);
 
                 if ($validator->fails()) {

@@ -366,7 +366,7 @@ class LeadController extends Controller
     public function updateLabels(Request $request, $id)
     {
         if (Auth::user()->can('edit-leads')) {
-            $leads = Lead::find($id);
+            $leads = Lead::findOrFail($id);
             $creatorId = creatorId();
 
             if ($leads->created_by == $creatorId) {
@@ -697,7 +697,7 @@ class LeadController extends Controller
         if (Auth::user()->can('edit-leads')) {
             $validated = $request->validated();
 
-            $call = LeadCall::find($callId);
+            $call = LeadCall::findOrFail($callId);
             $call->subject     = $request->subject;
             $call->call_type   = $request->call_type;
             $call->duration    = $request->duration;
@@ -716,7 +716,7 @@ class LeadController extends Controller
     public function callDestroy($callId)
     {
         if (Auth::user()->can('edit-leads')) {
-            $call = LeadCall::find($callId);
+            $call = LeadCall::findOrFail($callId);
             $lead = $call ? Lead::find($call->lead_id) : null;
             DestroyLeadCall::dispatch($call);
             $call->delete();
@@ -735,12 +735,12 @@ class LeadController extends Controller
         try {
             if (Auth::user()->can('lead-move')) {
                 $post       = $request->all();
-                $lead       = Lead::find($post['lead_id']);
+                $lead       = Lead::findOrFail($post['lead_id']);
                 $lead_users = $lead->userLeads()->with('user')->get()->pluck('user.email', 'user.id')->toArray();
 
                 if ($lead->stage_id != $post['stage_id']) {
 
-                    $newStage = LeadStage::find($post['stage_id']);
+                    $newStage = LeadStage::findOrFail($post['stage_id']);
 
                     LeadActivityLog::create(
                         [

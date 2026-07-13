@@ -15,7 +15,7 @@ class StoreDealStageRequest extends FormRequest
     {
         return [
             'name' => 'required|max:100',
-            'pipeline_id' => 'nullable|integer|exists:pipelines,id',
+            'pipeline_id' => 'nullable|integer|exists:pipelines,id,created_by,' . creatorId(),
             'probability' => 'nullable|integer|min:0|max:100'
         ];
     }

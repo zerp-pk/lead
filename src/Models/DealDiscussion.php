@@ -4,10 +4,13 @@ namespace Zerp\Lead\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DealDiscussion extends Model
 {
+    use TenantScoped;
+
     protected $fillable = [
         'deal_id',
         'comment',

@@ -14,7 +14,7 @@ class StoreDealTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'deal_id' => 'required|exists:deals,id',
+            'deal_id' => 'required|exists:deals,id,created_by,' . creatorId(),
             'name' => 'required|string|max:255',
             'type' => 'nullable|in:todo,call,email,meeting',
             'date' => 'required|date',

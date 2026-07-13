@@ -14,7 +14,7 @@ class StoreLeadTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lead_id' => 'required|exists:leads,id',
+            'lead_id' => 'required|exists:leads,id,created_by,' . creatorId(),
             'name' => 'required|string|max:255',
             'type' => 'nullable|in:todo,call,email,meeting',
             'date' => 'required|date',

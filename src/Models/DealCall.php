@@ -3,10 +3,16 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use App\Models\User;
 
 class DealCall extends Model
 {
+    use TenantScoped;
+
+    /** No created_by column; the parent deal carries the tenant boundary. */
+    public string $tenantParent = 'deal';
+
     protected $fillable = [
         'deal_id',
         'subject',

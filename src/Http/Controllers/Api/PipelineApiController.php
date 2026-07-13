@@ -127,7 +127,7 @@ class PipelineApiController extends Controller
     private function updatePipeline(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'pipeline_id' => 'required|exists:pipelines,id',
+            'pipeline_id' => 'required|exists:pipelines,id,created_by,' . creatorId(),
             'name'        => 'required|max:20',
         ]);
 

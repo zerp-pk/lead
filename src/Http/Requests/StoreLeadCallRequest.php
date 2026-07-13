@@ -14,7 +14,7 @@ class StoreLeadCallRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lead_id' => 'required|exists:leads,id',
+            'lead_id' => 'required|exists:leads,id,created_by,' . creatorId(),
             'subject' => 'required|string|max:255',
             'call_type' => 'required|in:Outbound,Inbound',
             'duration' => 'required|string',
