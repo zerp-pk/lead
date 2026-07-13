@@ -324,7 +324,7 @@ class DealController extends Controller
     public function updateLabels(Request $request, $id)
     {
         if (Auth::user()->can('edit-deals')) {
-            $deal = Deal::find($id);
+            $deal = Deal::findOrFail($id);
             if ($deal->created_by == creatorId()) {
                 if ($request->labels) {
                     $deal->labels = is_array($request->labels) ? implode(',', $request->labels) : $request->labels;
@@ -593,7 +593,7 @@ class DealController extends Controller
     public function callUpdate(UpdateDealCallRequest $request, $callId)
     {
         if (Auth::user()->can('edit-deals')) {
-            $call = DealCall::find($callId);
+            $call = DealCall::findOrFail($callId);
             $call->subject     = $request->subject;
             $call->call_type   = $request->call_type;
             $call->duration    = $request->duration;
@@ -612,7 +612,7 @@ class DealController extends Controller
     public function callDestroy($callId)
     {
         if (Auth::user()->can('edit-deals')) {
-            $call = DealCall::find($callId);
+            $call = DealCall::findOrFail($callId);
             DestroyDealCall::dispatch($call);
             $call->delete();
 
@@ -687,13 +687,13 @@ class DealController extends Controller
             if (Auth::user()->can('deal-move')) {
                 $usr = Auth::user();
                 $post = $request->all();
-                $deal = Deal::find($post['deal_id']);
+                $deal = Deal::findOrFail($post['deal_id']);
                 $clients    = ClientDeal::select('client_id')->where('deal_id', '=', $deal->id)->get()->pluck('client_id')->toArray();
                 $deal_users = $deal->users->pluck('id')->toArray();
                 $usrs       = User::whereIN('id', array_merge($deal_users, $clients))->get()->pluck('email', 'id')->toArray();
 
                 if ($deal->stage_id != $post['stage_id']) {
-                    $newStage = DealStage::find($post['stage_id']);
+                    $newStage = DealStage::findOrFail($post['stage_id']);
 
                     DealActivityLog::create([
                         'user_id' => Auth::user()->id,
@@ -721,7 +721,7 @@ class DealController extends Controller
                     $resp =  EmailTemplate::sendEmailTemplate('Deal Moved', $usrs, $dArr);
                 }
                 foreach ($post['order'] as $key => $item) {
-                    $deal           = Deal::find($item);
+                    $deal           = Deal::findOrFail($item);
                     $deal->order    = $key;
                     $deal->stage_id = $post['stage_id'];
                     $deal->save();

@@ -3,10 +3,16 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class LeadActivityLog extends Model
 {
+    use TenantScoped;
+
+    /** No created_by column; the parent lead carries the tenant boundary. */
+    public string $tenantParent = 'lead';
+
     use HasFactory;
 
     protected $fillable = [

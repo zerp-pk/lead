@@ -56,7 +56,7 @@ class LeadStageApiController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name'        => 'required|max:100',
-                'pipeline_id' => 'required|integer|exists:pipelines,id',
+                'pipeline_id' => 'required|integer|exists:pipelines,id,created_by,' . creatorId(),
             ]);
 
             if ($validator->fails()) {
@@ -84,9 +84,9 @@ class LeadStageApiController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'lead_stage_id' => 'required|exists:lead_stages,id',
+                'lead_stage_id' => 'required|exists:lead_stages,id,created_by,' . creatorId(),
                 'name'          => 'required|string',
-                'pipeline_id'   => 'required|exists:pipelines,id',
+                'pipeline_id'   => 'required|exists:pipelines,id,created_by,' . creatorId(),
             ]);
 
             if ($validator->fails()) {

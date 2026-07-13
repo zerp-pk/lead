@@ -16,7 +16,7 @@ class StoreLabelRequest extends FormRequest
         return [
             'name' => 'required|max:100',
             'color' => 'required',
-            'pipeline_id' => 'nullable|exists:pipelines,id'
+            'pipeline_id' => 'nullable|exists:pipelines,id,created_by,' . creatorId()
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Zerp\Lead\Models\Pipeline;
 use Zerp\Lead\Models\Stage;
@@ -11,7 +12,7 @@ use App\Models\User;
 
 class Deal extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScoped;
 
     protected $fillable = [
         'name',

@@ -3,11 +3,12 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class LostReason extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScoped;
 
     protected $fillable = [
         'name',

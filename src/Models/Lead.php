@@ -4,12 +4,13 @@ namespace Zerp\Lead\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Zerp\ProductService\Models\ProductServiceItem;
 
 class Lead extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScoped;
 
     protected $fillable = [
         'name',

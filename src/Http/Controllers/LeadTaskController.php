@@ -84,7 +84,7 @@ class LeadTaskController extends Controller
                     'remark' => json_encode(['title' => $leadTask->name]),
                 ]
             );
-            $lead       = Lead::find($validated['lead_id']);
+            $lead       = Lead::findOrFail($validated['lead_id']);
             $lead_users = $lead->user->pluck('id')->toArray();
             $usrs       = User::whereIN('id', $lead_users)->get()->pluck('email', 'id')->toArray();
             if (!empty(company_setting('New Task')) && company_setting('New Task')  == true) {

@@ -11,6 +11,9 @@ use Spatie\Permission\Models\Role;
 
 class LeadUtility extends Model
 {
+    // Runs while provisioning a NEW company, often from a superadmin's session, so
+    // it looks up rows belonging to $company_id rather than the caller's tenant.
+    // The tenant scope would filter those out and re-create the defaults every time.
     public static function defaultdata($company_id = null)
     {
         $pipelines = [
@@ -36,7 +39,8 @@ class LeadUtility extends Model
 
         if (!empty($company_id)) {
             foreach ($pipelines as $pipeline_name) {
-                $pipeline = Pipeline::where('name', $pipeline_name)
+                $pipeline = Pipeline::withoutGlobalScope('tenant')
+                    ->where('name', $pipeline_name)
                     ->where('created_by', $company_id)
                     ->first();
                 
@@ -50,7 +54,8 @@ class LeadUtility extends Model
 
                 // Create Lead Stages
                 foreach ($lead_stages as $index => $stage_name) {
-                    $leadStage = LeadStage::where('name', $stage_name)
+                    $leadStage = LeadStage::withoutGlobalScope('tenant')
+                    ->where('name', $stage_name)
                         ->where('created_by', $company_id)
                         ->first();
                     
@@ -67,7 +72,8 @@ class LeadUtility extends Model
 
                 // Create Deal Stages
                 foreach ($dealstage as $index => $stage_name) {
-                    $dealStage = DealStage::where('name', $stage_name)
+                    $dealStage = DealStage::withoutGlobalScope('tenant')
+                    ->where('name', $stage_name)
                         ->where('created_by', $company_id)
                         ->first();
                     

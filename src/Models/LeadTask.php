@@ -3,10 +3,13 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeadTask extends Model
 {
+    use TenantScoped;
+
     protected $fillable = [
         'lead_id',
         'name',

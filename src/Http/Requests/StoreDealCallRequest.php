@@ -14,7 +14,7 @@ class StoreDealCallRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'deal_id' => 'required|exists:deals,id',
+            'deal_id' => 'required|exists:deals,id,created_by,' . creatorId(),
             'subject' => 'required|string|max:255',
             'call_type' => 'required|in:Outbound,Inbound',
             'duration' => 'required|string',

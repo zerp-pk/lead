@@ -61,7 +61,7 @@ class DealTaskController extends Controller
         if(Auth::user()->can('create-deal-tasks')){
             $usr = Auth::user();
             $validated = $request->validated();                  
-            $deal       = Deal::find($validated['deal_id']);
+            $deal       = Deal::findOrFail($validated['deal_id']);
             $clients    = ClientDeal::select('client_id')->where('deal_id', '=', $validated['deal_id'])->get()->pluck('client_id')->toArray();
             $deal_users = $deal->users->pluck('id')->toArray();
             $usrs       = User::whereIN('id', array_merge($deal_users, $clients))->get()->pluck('email', 'id')->toArray();

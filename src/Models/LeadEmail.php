@@ -3,10 +3,16 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Zerp\Lead\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeadEmail extends Model
 {
+    use TenantScoped;
+
+    /** No created_by column; the parent lead carries the tenant boundary. */
+    public string $tenantParent = 'lead';
+
     protected $fillable = [
         'lead_id',
         'to',
