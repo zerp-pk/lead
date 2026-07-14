@@ -3,7 +3,7 @@
 namespace Zerp\Lead\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Zerp\Lead\Models\Concerns\TenantScoped;
+use App\Models\Concerns\TenantScoped;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DealTask extends Model
