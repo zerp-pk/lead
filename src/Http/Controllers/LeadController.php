@@ -840,9 +840,19 @@ class LeadController extends Controller
                 CreateUser::dispatch($request, $client);                
 
                 if ($enableEmailVerification === 'on') {
-                    // Apply dynamic mail configuration
-                    SetConfigEmail(creatorId());
-                    $client->sendEmailVerificationNotification();
+                    try {
+                        // Apply dynamic mail configuration
+                        SetConfigEmail(creatorId());
+                        $client->sendEmailVerificationNotification();
+                    } catch (\Throwable $e) {
+                        // SetConfigEmail() throws when the company has no SMTP set up.
+                        // The client already exists and the deal still has to be made,
+                        // so a missing mail server must not fail the conversion.
+                        \Log::warning('Client created but its verification email could not be sent', [
+                            'client_id' => $client->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
             }
 
@@ -852,7 +862,14 @@ class LeadController extends Controller
             ];
 
             // Send Email to client if they are new created.
-            EmailTemplate::sendEmailTemplate('New User', [$client->id => $client->email], $cArr);
+            try {
+                EmailTemplate::sendEmailTemplate('New User', [$client->id => $client->email], $cArr);
+            } catch (\Throwable $e) {
+                \Log::warning('Could not send the new client its welcome email', [
+                    'client_id' => $client->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             $stage = DealStage::where('pipeline_id', $lead->pipeline_id)->first();
             if (!$stage) {
