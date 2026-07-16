@@ -102,7 +102,7 @@ export default function DealReports() {
                             <CardContent className="p-4">
                                 <p className="text-xs font-medium text-amber-700">{t('Win Rate')}</p>
                                 <p className="text-2xl font-bold text-amber-700">
-                                    {winLoss?.win_rate === null || winLoss?.win_rate === undefined ? '—' : `${winLoss.win_rate}%`}
+                                    {winLoss?.win_rate === null || winLoss?.win_rate === undefined ? '-' : `${winLoss.win_rate}%`}
                                 </p>
                             </CardContent>
                         </Card>

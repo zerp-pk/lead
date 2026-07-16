@@ -10,7 +10,7 @@ function check(string $label, $actual, $expected): void
 {
     global $failures;
     if ($actual !== $expected) {
-        fwrite(STDERR, "FAIL: $label — got " . var_export($actual, true) . ", expected " . var_export($expected, true) . "\n");
+        fwrite(STDERR, "FAIL: $label - got " . var_export($actual, true) . ", expected " . var_export($expected, true) . "\n");
         $failures++;
     }
 }
