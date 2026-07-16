@@ -12,7 +12,7 @@ use Zerp\Lead\Models\LeadScoreRule;
  * sum of matched rule points, normalized to 0–100 against the maximum achievable
  * (sum of all active rule points). Signals include both lead attributes and
  * engagement (activity/call counts), so the stored score must be recomputed
- * whenever any of those change — see recompute()/recomputeAll() call sites.
+ * whenever any of those change - see recompute()/recomputeAll() call sites.
  */
 class LeadScoring
 {
@@ -38,7 +38,7 @@ class LeadScoring
     /**
      * Pure evaluator. $signals: [field => scalar|array]. $rules: array of
      * ['field','operator','value','points']. Returns total/max/percent.
-     * No DB, no models — this is the unit under test.
+     * No DB, no models - this is the unit under test.
      */
     public static function evaluate(array $signals, array $rules): array
     {
@@ -113,7 +113,7 @@ class LeadScoring
 
     /**
      * Recompute every lead for a creator. Triggered when rules change.
-     * ponytail: O(leads) with per-lead count queries; fine at SMB scale — move
+     * ponytail: O(leads) with per-lead count queries; fine at SMB scale - move
      * to a queued job with grouped counts if lead volume grows large.
      */
     public static function recomputeAll(int $creatorId): void
