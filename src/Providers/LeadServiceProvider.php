@@ -16,7 +16,17 @@ class LeadServiceProvider extends ServiceProvider
         if (file_exists($apiRoutesPath)) {
             $this->loadRoutesFrom($apiRoutesPath);
         }
-        
+
+        // Scoped Swagger/OpenAPI docs for this module at /docs/lead.
+        // Guarded so the package still works if the host app has no Scramble.
+        if (class_exists(\Dedoc\Scramble\Scramble::class)) {
+            \Dedoc\Scramble\Scramble::registerApi('lead', [
+                'api_path' => 'api/lead',
+                'info' => ['version' => \Composer\InstalledVersions::getPrettyVersion('zerp/lead') ?? '1.0.0', 'description' => 'Zerp Lead/CRM module REST API for mobile and third-party clients.'],
+                'ui' => ['title' => 'Zerp Lead API'],
+            ])->expose(ui: '/docs/lead', document: '/docs/lead.json');
+        }
+
         $migrationsPath = __DIR__.'/../Database/Migrations';
         if (is_dir($migrationsPath)) {
             $this->loadMigrationsFrom($migrationsPath);
