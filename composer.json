@@ -3,11 +3,24 @@
     "description": "CRM and lead management module for the Zerp ERP platform",
     "type": "library",
     "license": "MIT",
-    "require": {},
+    "require": {
+        "php": "^8.2"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0 || ^10.0"
+    },
     "autoload": {
         "psr-4": {
             "Zerp\\Lead\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Zerp\\Lead\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "authors": [
         {
